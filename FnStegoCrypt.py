@@ -115,7 +115,7 @@ class ImprovedSteganography:
                 output_filename = output_filename[:-5] + "_stego.png"
                 img_copy.save(output_filename, format="PNG")
             else:
-                img_copy.save(output_filename)
+                img_copy.save(output_filename, format="PNG")
             print(f"\nData hidden in image: {output_filename}")
 
     def extract_data_from_image(self, image_path: str) -> bytes:
