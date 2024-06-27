@@ -18,7 +18,6 @@ print("{:^80}".format("""
 #       #    #  #####    #   ######  ####   ####   #####  #    #   #   #        #
 """))
 
-
 # Registrar o opener HEIF
 register_heif_opener()
 
@@ -30,6 +29,9 @@ KDF_ITERATIONS = 100000
 
 class ImprovedSteganography:
     def __init__(self):
+        self.salt = None
+
+    def generate_salt(self):
         self.salt = os.urandom(SALT_SIZE)
 
     def _derive_key(self, password):
@@ -86,7 +88,7 @@ class ImprovedSteganography:
             pixels = img_copy.load()
 
             data_hash = self.hash_data(data)
-            data_to_hide = data_hash + data
+            data_to_hide = self.salt + data_hash + data
             binary_data = struct.pack('>I', len(data_to_hide)) + data_to_hide
             binary_data = ''.join(format(byte, '08b') for byte in binary_data)
             data_length = len(binary_data)
@@ -136,8 +138,9 @@ class ImprovedSteganography:
             data_length = struct.unpack('>I', int(binary_data[:32], 2).to_bytes(4, byteorder='big'))[0]
             extracted_data = int(binary_data[32:32+data_length*8], 2).to_bytes(data_length, byteorder='big')
             
-            extracted_hash = extracted_data[:HASH_SIZE]
-            extracted_content = extracted_data[HASH_SIZE:]
+            self.salt = extracted_data[:SALT_SIZE]
+            extracted_hash = extracted_data[SALT_SIZE:SALT_SIZE+HASH_SIZE]
+            extracted_content = extracted_data[SALT_SIZE+HASH_SIZE:]
             if self.hash_data(extracted_content) != extracted_hash:
                 raise ValueError("Data integrity check failed")
             
@@ -153,6 +156,7 @@ def process_directory(stego: ImprovedSteganography, input_dir: str, output_dir: 
     for file_path in glob.glob(os.path.join(input_dir, '*')):
         if file_path.lower().endswith(supported_formats):
             try:
+                stego.generate_salt()
                 encrypted_data = stego.encrypt_data(data, password)
                 stego.hide_data_in_image(file_path, encrypted_data, output_dir)
             except Exception as e:
@@ -183,6 +187,7 @@ def main():
                 if os.path.isdir(input_path):
                     process_directory(stego, input_path, output_dir, data, password)
                 else:
+                    stego.generate_salt()
                     encrypted_data = stego.encrypt_data(data, password)
                     stego.hide_data_in_image(input_path, encrypted_data, output_dir)
                 print("\nData has been encrypted and hidden in the image(s)")
