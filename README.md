@@ -1,36 +1,44 @@
 # FnStegoCrypt
 
-`FnStegoCrypt` é um script Python para ocultar dados criptografados de forma segura dentro de arquivos de imagem utilizando esteganografia.
+`FnStegoCrypt` is a Python script for securely hiding encrypted data inside image files using steganography.
 
-Apoie com BTC: 
+Back it up with BTC: 
 ```
 bc1qgch352sr3pf5l9nrr5knf7ls9hac3k60uxndwr
 ```
 
-## Algoritmos Utilizados
-- **AES-GCM (Advanced Encryption Standard - Galois/Counter Mode)**: Utilizado para criptografia dos dados.
-- **PBKDF2 (Password-Based Key Derivation Function 2)**: Utilizado para derivação de chave a partir da senha fornecida.
-- **LSB (Least Significant Bit) Steganography**: Utilizado para esconder os dados criptografados dentro das imagens.
+## Algorithms 
+- **AES-GCM (Advanced Encryption Standard - Galois/Counter Mode)**: Used for data encryption.
+- **PBKDF2 (Password-Based Key Derivation Function 2)**: Used to derive the key from the password provided.
+- **LSB (Least Significant Bit) Steganography**: Used to hide encrypted data within images.
 
-## Dependências
-Instale as dependências necessárias usando pip:
+## Dependencies
+Install the necessary dependencies using pip:
 ```bash
 pip install numpy cryptography Pillow pillow-heif
 ```
 
-## Suporte a Formatos de Imagem
+## Image Format Support
 - PNG JPG/JPEG HEIF/HEIC
+ 
+## Theoretical capability
+- Full HD (1920x1080 pixels) - approximately 778,600 bytes 750-800 KB
+- 4K (3840x2160 pixels) - approximately 3,932,160 bytes (3.7-4.1 MB)
 
-## Aviso de Suporte
-Este projeto é fornecido "como está", sem qualquer tipo de suporte ou garantia. Use por sua conta e risco. O autor não se responsabiliza por qualquer dano ou perda de dados decorrente do uso deste software.
+## Support Warning
+This project is supplied "as it is", without any kind of support or guarantee. Use at your own risk. 
 
-## Notas Importantes
-A senha deve conter apenas caracteres ASCII.
-Certifique-se de que a capacidade da imagem é suficiente para armazenar os dados. Caso contrário, uma mensagem de erro será exibida.
-A imagem de saída com os dados ocultos será salva no formato original, a menos que seja HEIC, nesse caso será convertida para PNG.
+The author is not responsible for any damage or loss of data resulting from the use of this software
 
-## Contribuição
-Sinta-se à vontade para contribuir com melhorias, correções de bugs ou novas funcionalidades. Envie um pull request ou abra uma issue no repositório GitHub.
+## Important Notes
+The password must only contain ASCII characters.
 
-## Licença
-Este projeto está licenciado sob a Licença MIT. Veja o arquivo LICENSE para mais detalhes.
+Make sure that the capacity of the image is sufficient to store the data. Otherwise, an error message will be displayed.
+
+The output image with the hidden data will be converted to PNG.
+
+## Contributions
+Feel free to contribute improvements, bug fixes or new features. Send a pull request or open an issue in the GitHub repository.]
+
+## License
+This project is licensed under the MIT License. See the LICENSE file for more details.
