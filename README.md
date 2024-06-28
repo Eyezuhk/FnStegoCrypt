@@ -1,6 +1,7 @@
 # FnStegoCrypt
 
 `FnStegoCrypt` é um script Python para ocultar dados criptografados de forma segura dentro de arquivos de imagem utilizando esteganografia.
+Apoie com BTC: bc1qgch352sr3pf5l9nrr5knf7ls9hac3k60uxndwr
 
 ## Algoritmos Utilizados
 - **AES-GCM (Advanced Encryption Standard - Galois/Counter Mode)**: Utilizado para criptografia dos dados.
