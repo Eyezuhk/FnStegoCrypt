@@ -8,6 +8,7 @@ from PIL import Image
 import struct
 import glob
 from pillow_heif import register_heif_opener
+import concurrent.futures
 
 print("{:^80}".format("""
 #######         #####                              #####        #     #
@@ -108,7 +109,7 @@ class ImprovedSteganography:
             output_filename = output_filename[:-4] + "_stego.png"
         
         Image.fromarray(img_array).save(output_filename, format="PNG")
-        print(f"\nData hidden in image: {output_filename}")
+        return f"\nData hidden in image: {output_filename}"
 
     def extract_data_from_image(self, image_path: str) -> bytes:
         """Extrai os dados escondidos na imagem usando NumPy para melhor performance."""
@@ -138,17 +139,26 @@ def clean_path(path: str) -> str:
     """Limpa e normaliza o caminho do arquivo."""
     return os.path.abspath(os.path.expanduser(path.strip().strip('"').strip("'")))
 
+def process_single_image(stego: ImprovedSteganography, file_path: str, output_dir: str, data: bytes, password: str):
+    """Processa uma única imagem."""
+    try:
+        stego.generate_salt()
+        encrypted_data = stego.encrypt_data(data, password)
+        return stego.hide_data_in_image(file_path, encrypted_data, output_dir)
+    except Exception as e:
+        return f"\nError processing {file_path}: {str(e)}"
+
 def process_directory(stego: ImprovedSteganography, input_dir: str, output_dir: str, data: bytes, password: str):
-    """Processa todos os arquivos de imagem em um diretório."""
+    """Processa todos os arquivos de imagem em um diretório usando threads."""
     supported_formats = ('.png', '.jpg', '.jpeg', '.heif', '.heic')
-    for file_path in glob.glob(os.path.join(input_dir, '*')):
-        if file_path.lower().endswith(supported_formats):
-            try:
-                stego.generate_salt()
-                encrypted_data = stego.encrypt_data(data, password)
-                stego.hide_data_in_image(file_path, encrypted_data, output_dir)
-            except Exception as e:
-                print(f"\nError processing {file_path}: {str(e)}")
+    image_files = [f for f in glob.glob(os.path.join(input_dir, '*')) if f.lower().endswith(supported_formats)]
+    
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        futures = [executor.submit(process_single_image, stego, file_path, output_dir, data, password) 
+                   for file_path in image_files]
+        
+        for future in concurrent.futures.as_completed(futures):
+            print(future.result())
 
 def main():
     stego = ImprovedSteganography()
@@ -175,9 +185,8 @@ def main():
                 if os.path.isdir(input_path):
                     process_directory(stego, input_path, output_dir, data, password)
                 else:
-                    stego.generate_salt()
-                    encrypted_data = stego.encrypt_data(data, password)
-                    stego.hide_data_in_image(input_path, encrypted_data, output_dir)
+                    result = process_single_image(stego, input_path, output_dir, data, password)
+                    print(result)
                 print("\nData has been encrypted and hidden in the image(s)")
             except Exception as e:
                 print(f"\nAn error occurred: {str(e)}")
