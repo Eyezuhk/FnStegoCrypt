@@ -1,4 +1,5 @@
 import os
+import numpy as np
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
@@ -67,84 +68,71 @@ class ImprovedSteganography:
         digest.update(data)
         return digest.finalize()
 
-    def check_image_capacity(self, image_path: str, data_length: int):
+    def check_image_capacity(self, img_array: np.ndarray, data_length: int):
         """Verifica se a imagem tem capacidade suficiente para os dados."""
-        with Image.open(image_path) as img:
-            if img.mode != 'RGB':
-                img = img.convert('RGB')
-            width, height = img.size
-            max_bytes = (width * height * 3) // 8
-            if data_length > max_bytes:
-                raise ValueError("Data is too large for the image")
+        max_bytes = img_array.size * 3 // 8
+        if data_length > max_bytes:
+            raise ValueError("Data is too large for the image")
 
     def hide_data_in_image(self, image_path: str, data: bytes, output_dir: str):
-        """Esconde os dados na imagem."""
-        with Image.open(image_path) as img:
-            if img.mode != 'RGB':
-                img = img.convert('RGB')
-            
-            img_copy = img.copy()
-            width, height = img_copy.size
-            pixels = img_copy.load()
+        """Esconde os dados na imagem usando NumPy para melhor performance."""
+        # Carrega a imagem como um array NumPy
+        img = Image.open(image_path)
+        if img.mode != 'RGB':
+            img = img.convert('RGB')
+        img_array = np.array(img)
 
-            data_hash = self.hash_data(data)
-            data_to_hide = self.salt + data_hash + data
-            binary_data = struct.pack('>I', len(data_to_hide)) + data_to_hide
-            binary_data = ''.join(format(byte, '08b') for byte in binary_data)
-            data_length = len(binary_data)
+        data_hash = self.hash_data(data)
+        data_to_hide = self.salt + data_hash + data
+        binary_data = struct.pack('>I', len(data_to_hide)) + data_to_hide
 
-            self.check_image_capacity(image_path, len(data_to_hide))
+        self.check_image_capacity(img_array, len(binary_data))
 
-            index = 0
-            for y in range(height):
-                for x in range(width):
-                    pixel = list(pixels[x, y])
-                    for c in range(3):
-                        if index < data_length:
-                            pixel[c] = pixel[c] & ~1 | int(binary_data[index])
-                            index += 1
-                        else:
-                            break
-                    pixels[x, y] = tuple(pixel)
-                    if index >= data_length:
-                        break
-                if index >= data_length:
-                    break
+        # Converte os dados para um array de bits
+        bits = np.unpackbits(np.frombuffer(binary_data, dtype=np.uint8))
 
-            output_filename = os.path.join(output_dir, os.path.basename(image_path))
-            _, ext = os.path.splitext(output_filename)
-            if ext.lower() == '.heic':
-                output_filename = output_filename[:-5] + "_stego.png"
-                img_copy.save(output_filename, format="PNG")
-            else:
-                img_copy.save(output_filename, format="PNG")
-            print(f"\nData hidden in image: {output_filename}")
+        # Prepara a máscara para os LSBs
+        mask = np.zeros(img_array.shape[:2] + (3,), dtype=np.uint8)
+        mask.flat[:bits.size] = bits
+
+        # Aplica a máscara à imagem
+        img_array[..., :3] &= 0xFE  # Zera o LSB
+        img_array[..., :3] |= mask  # Aplica os novos LSBs
+
+        # Salva a imagem modificada
+        output_filename = os.path.join(output_dir, os.path.basename(image_path))
+        _, ext = os.path.splitext(output_filename)
+        if ext.lower() == '.heic':
+            output_filename = output_filename[:-5] + "_stego.png"
+        else:
+            output_filename = output_filename[:-4] + "_stego.png"
+        
+        Image.fromarray(img_array).save(output_filename, format="PNG")
+        print(f"\nData hidden in image: {output_filename}")
 
     def extract_data_from_image(self, image_path: str) -> bytes:
-        """Extrai os dados escondidos na imagem."""
-        with Image.open(image_path) as img:
-            if img.mode != 'RGB':
-                img = img.convert('RGB')
-            width, height = img.size
-            pixels = img.load()
+        """Extrai os dados escondidos na imagem usando NumPy para melhor performance."""
+        # Carrega a imagem como um array NumPy
+        img_array = np.array(Image.open(image_path))
 
-            binary_data = ""
-            for y in range(height):
-                for x in range(width):
-                    pixel = pixels[x, y]
-                    for c in range(3):
-                        binary_data += str(pixel[c] & 1)
+        # Extrai os LSBs
+        lsb = img_array[..., :3] & 1
+        bits = np.packbits(lsb.reshape(-1))
 
-            data_length = struct.unpack('>I', int(binary_data[:32], 2).to_bytes(4, byteorder='big'))[0]
-            extracted_data = int(binary_data[32:32+data_length*8], 2).to_bytes(data_length, byteorder='big')
-            
-            self.salt = extracted_data[:SALT_SIZE]
-            extracted_hash = extracted_data[SALT_SIZE:SALT_SIZE+HASH_SIZE]
-            extracted_content = extracted_data[SALT_SIZE+HASH_SIZE:]
-            if self.hash_data(extracted_content) != extracted_hash:
-                raise ValueError("Data integrity check failed")
-            
-            return extracted_content
+        # Extrai o comprimento dos dados
+        data_length = struct.unpack('>I', bits[:4].tobytes())[0]
+        
+        # Extrai os dados
+        extracted_data = bits[4:4+data_length].tobytes()
+
+        self.salt = extracted_data[:SALT_SIZE]
+        extracted_hash = extracted_data[SALT_SIZE:SALT_SIZE+HASH_SIZE]
+        extracted_content = extracted_data[SALT_SIZE+HASH_SIZE:]
+        
+        if self.hash_data(extracted_content) != extracted_hash:
+            raise ValueError("Data integrity check failed")
+        
+        return extracted_content
 
 def clean_path(path: str) -> str:
     """Limpa e normaliza o caminho do arquivo."""
