@@ -10,7 +10,7 @@
 ## Dependências
 Instale as dependências necessárias usando pip:
 ```bash
-pip install cryptography Pillow pillow-heif
+pip install numpy cryptography Pillow pillow-heif
 ```
 
 ## Suporte a Formatos de Imagem
