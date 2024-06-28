@@ -12,6 +12,9 @@ bc1qgch352sr3pf5l9nrr5knf7ls9hac3k60uxndwr
 - **PBKDF2 (Password-Based Key Derivation Function 2)**: Used to derive the key from the password provided.
 - **LSB (Least Significant Bit) Steganography**: Used to hide encrypted data within images.
 
+## Portable
+[FnStegoCrypt.exe](https://github.com/Eyezuhk/FnStegoCrypt/releases/download/v1.0.0/FnStegoCrypt.exe)
+
 ## Dependencies
 Install the necessary dependencies using pip:
 ```bash
