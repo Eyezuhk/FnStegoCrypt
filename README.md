@@ -14,6 +14,7 @@ bc1qgch352sr3pf5l9nrr5knf7ls9hac3k60uxndwr
 
 ## Portable
 [FnStegoCrypt.exe](https://github.com/Eyezuhk/FnStegoCrypt/releases/download/v1.0.0/FnStegoCrypt.exe)
+Some antivirus can detect it as a virus due to the encryption algorithms, the best would be to use the Python program.
 
 ## Dependencies
 Install the necessary dependencies using pip:
