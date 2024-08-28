@@ -2,7 +2,7 @@
 
 `FnStegoCrypt` is a Python script for securely hiding encrypted data inside image files using steganography.
 
-Back it up with BTC: 
+Support with BTC:
 ```
 bc1qgch352sr3pf5l9nrr5knf7ls9hac3k60uxndwr
 ```
